@@ -1,0 +1,5 @@
+"Opportunity ID","Annual Recurring Revenue (ARR) Currency","Annual Recurring Revenue (ARR)","array_of_sfdc_formulas","Team Territory Group","Age","Push Count","Opportunity Owner","Industry","Won"
+"abcdefgh1234567","USD","1420.69","{ ""quarter_created"": 1, ""quarter_closed"": 3, ""primary_product"": ""Product1"", ""partner_involved"": ""FALSE"" }","South West Commercial","123.0000000000","1","Jim Halpert","Healthcare","0"
+"abcdefgh1234568","USD","1234.00","{ ""quarter_created"": 2, ""quarter_closed"": 3, ""primary_product"": ""Product2"", ""partner_involved"": ""TRUE"" }","North East Commercial","87.0000000000","2","Dwight Schrute","Finance","1"
+"abcdefgh1234569","USD","6666.00","{ ""quarter_created"": 3, ""quarter_closed"": 4, ""primary_product"": ""Product3"", ""partner_involved"": ""TRUE"" }","South East Commercial","100.0000000000","3","Phyllis Vance","Services","1"
+"abcdefgh1234570","USD","69420.69","{ ""quarter_created"": 4, ""quarter_closed"": 4, ""primary_product"": ""Product4"", ""partner_involved"": ""FALSE"" }","South Central Commercial","364.0000000000","2","Stanley Hudson","Manufacturing","0"
