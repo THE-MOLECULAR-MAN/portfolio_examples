@@ -1,0 +1,435 @@
+---
+editor_options: 
+  chunk_output_type: inline
+---
+
+This is one of my homework assignments from a Coursera course on R and designing experiments.
+
+# Install and load dependencies
+
+```{r}
+#tools::package_dependencies("Matrix", which = "LinkingTo", reverse = TRUE)[[1L]]
+#install.packages("lme4", type = "source")
+
+cat("\014") # clear the output terminal
+print(paste('Restarting script at ', Sys.time()))
+print('Loading libraries...')
+
+library(plyr, quietly = TRUE)     # must be before dplyr
+
+library(ARTool, quietly = TRUE)   # for art, artlm
+library(MASS, quietly = TRUE)     # for polr
+library(RVAideMemoire, quietly = TRUE)
+library(XNomial, quietly = TRUE)
+library(car, quietly = TRUE)
+library(coin, quietly = TRUE)
+library(dplyr, quietly = TRUE)
+library(emmeans, quietly = TRUE)  # for emm, emmeans
+library(ez, quietly = TRUE)
+library(fitdistrplus, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+library(ggpubr, quietly = TRUE)
+library(lme4, quietly = TRUE)     # for glmer, lmer
+library(lmerTest, quietly = TRUE)
+library(multcomp, quietly = TRUE) # for glht
+library(nnet, quietly = TRUE)     # for multinom
+library(phia, quietly = TRUE)
+library(reshape2, quietly = TRUE)
+
+print('Finished loading all libraries.')
+```
+
+# Question 1
+
+Recall our file websearch3.csv. If you have not done so already, please download it from the course materials. This file describes a study of the number of searches people did with various search engines to successfully find 100 facts on the web. You originally analyzed this data with a one-way repeated measures ANOVA. Now you will use a linear mixed model (LMM). Let's refresh our memory:
+
+How many subjects took part in this study?
+
+**Answer: 30**
+
+```{r}
+df = read.csv("data/websearch3.csv")
+df$Engine  = factor(df$Engine)
+df$Subject = factor(df$Subject)
+df$Order   = factor(df$Order)
+
+n_distinct(df$Subject)
+```
+
+# Question 2
+
+To the nearest hundredth (two digits), how many searches on average did subjects require with the Google search engine?
+
+**Answer:** 152.67
+
+```{r}
+aggregate(df$Searches, list(df$Engine), FUN=mean)
+```
+
+# Question 3
+
+Conduct a linear mixed model (LMM) analysis of variance on Searches by Engine. To the nearest ten-thousandth (four digits),
+
+**what is the p-value of such a test?**
+
+**Answer:** 0.0564
+
+```{r}
+# set sum-to-zero contrasts for Engine:
+contrasts(df$Engine) <- "contr.sum"
+
+# Fit the linear mixed model (LMM) with Engine as a fixed effect and Subject as a random effect:
+m = lmer(Searches ~ Engine + (1|Subject), data=df)
+
+# Run the Type III ANOVA on the model:
+Anova(m, type=3, test.statistic="F")
+```
+
+# Question 4
+
+In light of your p-value result, are post hoc pairwise comparisons among levels of Engine justified, strictly speaking?
+
+**Answer: No**
+
+# Question 5
+
+Regardless of your answer to the previous question, conduct simultaneous pairwise comparisons among all levels of Engine. Correct your p-values with Holm's sequential Bonferroni procedure. To the nearest ten-thousandth (four digits),
+
+**what is the lowest corrected p-value resulting from such tests?**
+
+**Answer:** 0.0454
+
+```{r}
+# perform simultaneous pairwise comparisons among levels of Engine:
+summary(glht(m, mcp(Engine="Tukey")), test=adjusted(type="holm"))
+```
+
+# Question 6
+
+Because the omnibus linear mixed model (LMM) analysis of variance did not result in a significant main effect of Engine on Searches, post hoc pairwise comparisons were not justified. As a result, despite one such comparison having p\<.05, strictly speaking this "finding" must be disregarded.
+
+**Answer: True**
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+# Question 7
+
+Recall our file socialvalue.csv. If you have not done so already, please download it from the course materials. This file describes a study of people viewing a positive or negative film clip before going onto social media and then judging the value of the first 100 posts they see there. The number of valued posts was recorded. You originally analyzed this data with a 2×2 within-subjects ANOVA. Now you will use a linear mixed model (LMM). Let's refresh our memory:
+
+**How many subjects took part in this study?**
+
+**Answer: 16**
+
+```{r}
+df             = read.csv("data/socialvalue.csv")
+
+# mark columns as factors
+df$ClipOrder   = factor(df$ClipOrder)
+df$SocialOrder = factor(df$SocialOrder)
+df$Subject     = factor(df$Subject)
+df$Clip        = factor(df$Clip)
+df$Social      = factor(df$Social)
+
+head(df, 3)
+n_distinct(df$Subject)
+```
+
+# Question 8
+
+On average and to the nearest whole number, how many more posts were valued on Facebook than on Twitter after seeing a positive film clip?
+
+**Answer:** 10
+
+```{r}
+aggregate(df$Valued, by = list(df$Clip, df$Social), FUN=mean)
+68.7500	- 58.5625
+```
+
+# Question 9
+
+Conduct a linear mixed model (LMM) analysis of variance on Valued by Social and Clip. To the nearest ten-thousandth (four digits),
+
+**what is the p-value of the interaction effect?**
+
+**Answer: 0.0179**
+
+```{r}
+
+# set sum-to-zero contrasts for Social and Clip:
+contrasts(df$Social) <- "contr.sum"
+contrasts(df$Clip)   <- "contr.sum"
+
+# fit a linear mixed model with Social and Clip as fixed effects and Subject as a random effect
+m = lmer(Valued ~ Social * Clip + (1|Subject), data=df)
+
+# Type III ANOVA on the model
+Anova(m, type=3, test.statistic="F")
+```
+
+# Question 10
+
+Conduct two planned pairwise comparisons of how the film clips may have influenced judgments about the value of social media. The first question is whether on Facebook, the number of valued posts was different after people saw a positive film clip versus a negative film clip. The second question is whether on Twitter, the number of valued posts was different after people saw a positive film clip versus a negative film clip. Correcting for these two planned comparisons using Holm's sequential Bonferroni procedure, to the nearest ten-thousandth (four digits),
+
+**what is the lowest corrected p-value of the two tests?**
+
+**Answer:** 0.0005
+
+```{r}
+summary(glht(m, emm(pairwise ~ Social * Clip)), test=adjusted(type="none"))
+
+p.adjust(c(0.000225, 0.594397), method="holm")
+```
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+# Question 11
+
+Download the file teaser.csv from the course materials. This file describes a survey in which respondents recruited online saw five different teaser trailers for upcoming movies of different genres. Respondents simply indicated whether they liked each teaser or not. The research question is whether trailers from certain film genres were liked more than others.
+
+How many respondents took part in this survey?
+
+**Answer: 20**
+
+```{r}
+df = read.csv("data/teaser.csv")
+head(df)
+df$Teaser  = factor(df$Teaser)
+df$Subject = factor(df$Subject)
+df$Order   = factor(df$Order)
+
+n_distinct(df$Subject)
+```
+
+# Question 12
+
+By viewing the data table, discern which counterbalancing scheme was used for the Teaser factor, if any:
+
+**Answer:** Balanced Latin Square
+
+# Question 13
+
+Create a plot of Liked by Teaser. Which teaser trailer genre was liked the most?
+
+-   **action - ANSWER**
+
+```{r}
+aggregate(df$Liked, list(df$Teaser), FUN=sum)
+```
+
+# Question 14
+
+Using a generalized linear mixed model (GLMM), conduct a test of order effects on Liked to ensure counterbalancing worked. To the nearest ten-thousandth (four digits),
+
+**what is the p-value for the Order main effect?**
+
+**Answer: 0.4169**
+
+```{r}
+df$Teaser  = factor(df$Teaser)
+df$Subject = factor(df$Subject)
+df$Order   = factor(df$Order)
+
+contrasts(df$Order) <- "contr.sum"
+
+# create a generalized linear mixed model
+m = glmer(Liked ~ Order + (1|Subject), data=df, family=binomial)
+
+Anova(m, type=3)
+```
+
+# Question 15
+
+Using a generalized linear mixed model (GLMM), conduct a test of Liked by Teaser. To the nearest hundredth (two digits),
+
+**what is the Chi-Square statistic for the Teaser main effect?**
+
+**Answer: 26.70**
+
+```{r}
+# set sum-to-zero contrasts for Teaser:
+contrasts(df$Teaser) <- "contr.sum"
+
+m = glmer(Liked ~ Teaser + (1|Subject), data=df, family=binomial)
+
+Anova(m, type=3)
+```
+
+# Question 16
+
+Conduct simultaneous *post hoc* pairwise comparisons among levels of *Teaser*. Be sure to use Holm's sequential Bonferroni procedure.
+
+**How many of the tests are statistically significant?**
+
+**Answer: 5**
+
+```{r}
+# simultaneous pairwise comparisons:
+summary(glht(m, mcp(Teaser="Tukey")), test=adjusted(type="holm"))
+
+# then count the number of p-values > 0.05
+```
+
+------------------------------------------------------------------------
+
+# Question 17
+
+Download the file vocab.csv from the course materials. This file describes a study in which 50 recent posts by heavy and light users of social media were analyzed for how many unique words they used, i.e., the size of their operational vocabulary. The research question is whether heavy andlight users’ online vocabularies differ on each of three social media platforms.
+
+**How many subjects took part in this study?**
+
+**Answer: 30**
+
+```{r}
+df = read.csv("data/vocab.csv")
+df$Subject = factor(df$Subject)
+df$Order   = factor(df$Order)
+df$Social  = factor(df$Social)
+df$Heavy   = factor(df$Heavy)
+head(df)
+
+n_distinct(df$Subject)
+```
+
+# Question 18
+
+Create an interaction plot with Social on the X-axis and Heavy as the traces.
+
+**How many times, if any, do these lines cross?**
+
+**Answer: 0**
+
+```{r}
+with(df, interaction.plot(Social, Heavy, Vocab, ylim=c(0, max(Vocab))))
+```
+
+# Question 19
+
+Perform three Kolmogorov-Smirnov goodness-of-fit tests on Vocab for each level of Social using exponential distributions. To the nearest ten-thousandth (four digits),
+
+**what is the lowest p-value of these three tests?**
+
+**Answer: 0.2734**
+
+```{r}
+# fit the Facebook data to an exponential distribution
+fit = fitdistr(df[df$Social == "Facebook",]$Vocab, "exponential")$estimate
+
+# Kolmogorov-Smirnov test on FB
+ks.test(df[df$Social == "Facebook",]$Vocab, "pexp", rate=fit[1], exact=TRUE)
+
+# Kolmogorov-Smirnov test on Twitter
+fit = fitdistr(df[df$Social == "Twitter",]$Vocab, "exponential")$estimate
+ks.test(df[df$Social == "Twitter",]$Vocab, "pexp", rate=fit[1], exact=TRUE)
+
+# Kolmogorov-Smirnov test on GPlus
+fit = fitdistr(df[df$Social == "Gplus",]$Vocab, "exponential")$estimate
+ks.test(df[df$Social == "Gplus",]$Vocab, "pexp", rate=fit[1], exact=TRUE)
+```
+
+# 
+
+# Question 20
+
+Use a generalized linear mixed model (GLMM) to conduct a test of order effects on Vocab to ensure counterbalancing worked. To the nearest ten-thousandth (four digits),
+
+**what is the p-value for the Order main effect?**
+
+**Answer:** 0.7047
+
+```{r}
+contrasts(df$Heavy) <- "contr.sum"
+contrasts(df$Order) <- "contr.sum"
+
+# generalized linear mixed model
+m = glmer(Vocab ~ Heavy * Order + (1|Subject), data=df, family=Gamma(link="log"))
+
+Anova(m, type=3)
+```
+
+# Question 21
+
+Use a generalized linear mixed model (GLMM) to conduct a test of Vocab by Heavy and Social. To the nearest ten-thousandth (four digits),
+
+**what is the p-value for the interaction effect?**
+
+**Answer:** 0.8407
+
+```{r}
+# sum-to-zero contrasts
+contrasts(df$Heavy) <- "contr.sum"
+contrasts(df$Social) <- "contr.sum"
+
+# generalized linear mixed model
+m = glmer(Vocab ~ Heavy * Social + (1|Subject), data=df, family=Gamma(link="log"))
+
+# run the Type III ANOVA on the model:
+Anova(m, type=3)
+```
+
+# Question 22
+
+The only significant effect on Vocab was Social. Therefore, perform post hoc pairwise comparisons among levels of Social adjusted with Holm's sequential Bonferroni procedure. To the nearest ten-thousandth (four digits),
+
+**what is the p-value of the only non-significant pairwise comparison?**
+
+**Answer:** 0.578
+
+```{r}
+# simultaneous pairwise comparisons for Social:
+summary(glht(m, mcp(Social="Tukey")), test=adjusted(type="holm"))
+
+summary(glht(m, emm(pairwise ~ Heavy * Social)), test=adjusted(type="holm"))
+
+# Heavy × Social interaction wasn't significant
+```
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+# Question 23
+
+In Module 8, you employed a generalized linear model (GLM) for ordinal logistic regression using the polr function from the MASS library. You also conducted a GLM for nominal logistic regression using the multinom function from the nnet library. It is reasonable to wonder whether variants of such functions exist for generalized linear mixed models (GLMMs), i.e., variants that can handle random effects and therefore repeated measures. Unfortunately, although certain approaches exist, they are somewhat arcane, and the R community has not converged upon any approach to categorical response models with random effects. Our lectures did not venture into such territory, but as a final topic pointing toward the future, here is a brief treatment of mixed ordinal logistic regression.
+
+Let's begin by revisiting our file websearch3.csv from the course materials. Effort is a Likert-type response.
+
+**How many ordered categories does Effort have?**
+
+**Answer: 7**
+
+```{r}
+df = read.csv("data/websearch3.csv")
+
+df$Subject = factor(df$Subject)
+df$Engine  = factor(df$Engine)
+df$Order   = factor(df$Order)
+df$Effort  = ordered(df$Effort)
+
+df$Effort
+```
+
+# Question 25
+
+In light of the significant main effect of Engine on Effort, post hoc pairwise comparisons are justified among the three levels of Engine. (For simplicity, we’ll treat Effort now as a numeric response.) Plot the Effort ratings by Engine and perform pairwise comparisons with the following code. To the nearest ten-thousandth (four digits),
+
+**what is the p-value of the one non-significant pairwise comparison?**
+
+**Answer:** 0.9381
+
+```{r}
+df2 = df
+
+plot(as.numeric(Effort) ~ Engine, data=df2)
+m = lmer(as.numeric(Effort) ~ Engine + (1|Subject), data=df2)
+summary(glht(m, mcp(Engine="Tukey")), test=adjusted(type="holm"))
+```
