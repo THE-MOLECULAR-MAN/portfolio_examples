@@ -1,0 +1,13 @@
+CTU-IoT-Malware-Capture-3-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-35-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-44-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-48-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-9-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture_ready2train.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-1-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-20-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-21-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-34-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-42-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-60-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
+CTU-IoT-Malware-Capture-8-1conn.log.labeled.csv.gz filter=lfs diff=lfs merge=lfs -text
